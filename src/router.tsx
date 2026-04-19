@@ -7,10 +7,37 @@ import {
   Link,
   useNavigate,
 } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "./lib/supabase";
 import { useAuthStore } from "./store/authStore";
 import { Dashboard } from "./features/dashboard/Dashboard";
+import { AppShell } from "./components/AppShell";
+import { motion, AnimatePresence } from "motion/react";
+
+import { 
+  LayoutDashboard, 
+  LogOut, 
+  CloudSun, 
+  ChevronLeft, 
+  ChevronRight,
+  Menu,
+  X,
+  ClipboardList,
+  RotateCw,
+  CheckSquare,
+  UtensilsCrossed,
+  Bird,
+  FileText,
+  Pill,
+  ShieldAlert,
+  Package,
+  PlaneTakeoff,
+  Settings,
+  AlertCircle,
+  Accessibility,
+  UserCircle,
+  Clock
+} from "lucide-react";
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -43,7 +70,7 @@ const Login = () => {
   };
 
   return (
-    <div className="flex h-screen items-center justify-center bg-gray-50 p-6">
+    <div className="flex h-screen items-center justify-center bg-slate-50 p-6">
       <form
         onSubmit={handleLogin}
         className="flex flex-col gap-4 p-8 bg-white rounded-xl shadow-xl w-full max-w-md border border-slate-100"
@@ -84,7 +111,7 @@ const Login = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="mt-2 bg-blue-600 text-white py-3 rounded-lg font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+          className="mt-2 bg-blue-600 text-white py-3 border-none rounded-lg font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 min-h-[44px]"
         >
           {isLoading ? "Authenticating..." : "Sign In"}
         </button>
@@ -98,39 +125,6 @@ const loginRoute = createRoute({
   path: "/login",
   component: Login,
 });
-
-const AppShell = () => {
-  return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans antialiased text-slate-900">
-      <aside className="w-64 bg-slate-900 text-white p-6 flex flex-col shrink-0">
-        <div className="mb-10">
-          <h2 className="text-xl font-black tracking-tighter uppercase italic">KOA-Manager</h2>
-          <div className="h-1 w-12 bg-blue-500 mt-1" />
-        </div>
-        
-        <nav className="flex flex-col gap-2">
-          <Link
-            to="/"
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all text-slate-400 hover:text-white hover:bg-slate-800 [&.active]:bg-blue-600 [&.active]:text-white"
-          >
-            Dashboard
-          </Link>
-        </nav>
-
-        <button
-          onClick={() => supabase.auth.signOut()}
-          className="mt-auto flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
-        >
-          Log Out
-        </button>
-      </aside>
-
-      <main className="flex-1 p-8 overflow-y-auto">
-        <Outlet />
-      </main>
-    </div>
-  );
-};
 
 const authenticatedRoute = createRoute({
   getParentRoute: () => rootRoute,

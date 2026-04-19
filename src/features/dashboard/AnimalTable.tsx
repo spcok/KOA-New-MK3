@@ -1,88 +1,142 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
   createColumnHelper,
 } from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { Bird } from 'lucide-react';
 
 interface AnimalData {
   id: string;
   name: string;
   species: string;
+  ring: string;
+  todayWeight: string;
+  todayFeed: string;
+  lastFed: string;
   location: string;
-  currentWeight: string;
-  targetWeight: string;
 }
 
 const columnHelper = createColumnHelper<AnimalData>();
 
 const columns = [
   columnHelper.accessor('name', {
-    header: 'Animal',
-    cell: (info) => (
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-slate-200 rounded-full flex-shrink-0" />
-        <span className="font-bold text-slate-900">{info.getValue()}</span>
-      </div>
-    ),
+    header: 'Name',
+    cell: (info) => <span className="font-semibold text-slate-900">{info.getValue()}</span>,
   }),
   columnHelper.accessor('species', {
     header: 'Species',
+    cell: (info) => <span className="text-slate-600">{info.getValue()}</span>,
+  }),
+  columnHelper.accessor('ring', {
+    header: 'Ring/Microchip',
+    cell: (info) => <span className="text-slate-500">{info.getValue() || '--'}</span>,
+  }),
+  columnHelper.accessor('todayWeight', {
+    header: "Today's Weight",
+    cell: (info) => <span className="text-slate-600">{info.getValue() || '--'}</span>,
+  }),
+  columnHelper.accessor('todayFeed', {
+    header: "Today's Feed",
+    cell: (info) => <span className="text-slate-600">{info.getValue() || '--'}</span>,
+  }),
+  columnHelper.accessor('lastFed', {
+    header: 'Last Fed',
+    cell: (info) => <span className="text-slate-500">{info.getValue() || '--'}</span>,
   }),
   columnHelper.accessor('location', {
     header: 'Location',
-  }),
-  columnHelper.accessor('currentWeight', {
-    header: 'Weight',
-    cell: (info) => (
-      <div className="flex flex-col">
-        <span className="text-slate-900 font-medium">{info.getValue() || '--'}</span>
-        <span className="text-xs text-slate-400">Target: {info.row.original.targetWeight || '--'}</span>
-      </div>
-    ),
-  }),
-  columnHelper.display({
-    id: 'feed',
-    header: 'Feed',
-    cell: () => (
-      <input type="checkbox" className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-    ),
+    cell: (info) => <span className="text-blue-600 font-medium">{info.getValue()}</span>,
   }),
 ];
 
-export const AnimalTable = () => {
+export const AnimalTable = ({ activeCategory }: { activeCategory: string }) => {
+  const data: AnimalData[] = [];
+
   const table = useReactTable({
-    data: [], // Blank Slate
+    data,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const { rows } = table.getRowModel();
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 64,
+    overscan: 10,
+  });
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-      <table className="w-full text-left border-collapse">
-        <thead className="bg-slate-50 border-bottom border-slate-200">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th key={header.id} className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  {flexRender(header.column.columnDef.header, header.getContext())}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          <tr>
-            <td colSpan={columns.length} className="px-6 py-12 text-center text-slate-400">
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-lg font-medium">No animals in this category</p>
-                <p className="text-sm italic text-slate-300">Awaiting engine connection...</p>
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[400px]">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-slate-500 font-medium">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th 
+                    key={header.id} 
+                    className="px-6 py-3 font-medium whitespace-nowrap"
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody className="relative divide-y divide-slate-100">
+            {rows.length > 0 ? (
+              <div
+                ref={parentRef}
+                className="overflow-y-auto"
+                style={{ height: '400px' }}
+              >
+                <div
+                  style={{
+                    height: `${virtualizer.getTotalSize()}px`,
+                    width: '100%',
+                    position: 'relative',
+                  }}
+                >
+                  {virtualizer.getVirtualItems().map((virtualItem) => {
+                    const row = rows[virtualItem.index];
+                    return (
+                      <tr
+                        key={row.id}
+                        className="absolute w-full flex items-center bg-white hover:bg-slate-50 transition-colors text-sm"
+                        style={{
+                          height: `${virtualItem.size}px`,
+                          transform: `translateY(${virtualItem.start}px)`,
+                        }}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <td key={cell.id} className="px-6 py-4 flex-1 truncate">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </div>
               </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            ) : (
+              <tr>
+                <td colSpan={columns.length} className="py-32 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                     <p className="text-sm font-medium text-slate-600">No records found.</p>
+                     <p className="text-sm text-slate-500">Awaiting data engine sync...</p>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
